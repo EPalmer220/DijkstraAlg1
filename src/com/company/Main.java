@@ -1,5 +1,7 @@
 package com.company;
 
+import org.jgrapht.Graph;
+import org.jgrapht.Graphs;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
@@ -236,13 +238,49 @@ public class Main {
 
         System.out.println("\nWould you like to continue your journey or exit? Press \"1\" to exit:");
 
-        if(!userIn.nextLine().equals(1)){
-            System.out.println("\nWhere would you like to go?");
+        Boolean isRunning = true;
+
+        if(userIn.nextLine().equals("1")){
+            isRunning = false;
         }
 
+        while(isRunning){
 
+            String[] locations = new String[map.edgesOf(userLoc).size()];
 
+            iter = map.edgesOf(userLoc).iterator();
 
+            for(int i = 0; i < locations.length; i++){
+                DefaultWeightedEdge edge = (DefaultWeightedEdge) iter.next();
+                String locToAdd = Graphs.getOppositeVertex(map, edge, userLoc);
+                locations[i] = locToAdd;
+            }
+
+            isLocation = false;
+
+            while(isLocation == false){
+                System.out.println("Where would you like to go?");
+
+                userLoc = userIn.nextLine();
+                if(isLocation(userLoc, locations) == true)
+                    isLocation = true;
+            }
+
+            System.out.println("From the " + userLoc + ", you have these options:");
+
+            Iterator iter2 = map.edgesOf(userLoc).iterator();
+
+            for(int i = 0; i < map.edgesOf(userLoc).size(); i++){
+                DefaultWeightedEdge edge = (DefaultWeightedEdge) iter2.next();
+                System.out.println("\n" + edge + " with a distance of " + map.getEdgeWeight(edge) + " units.");
+            }
+
+            System.out.println("\nWould you like to continue your journey or exit? Press \"1\" to exit:");
+
+            if(userIn.nextLine().equals("1")){
+                isRunning = false;
+            }
+        }
     }
 
     public static boolean isLocation(String userLoc){
