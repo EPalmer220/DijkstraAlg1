@@ -6,6 +6,7 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Scanner;
 import java.util.Set;
@@ -282,6 +283,22 @@ public class Main {
             }
         }
     }
+
+    public static void dijkstraAlg(String source, String sink){
+        ArrayList<Object> shortestPath = new ArrayList<Object>();
+
+
+    }
+
+    public static void convertToVertexes(SimpleWeightedGraph map){
+        int count = 1;
+        Iterator iterator = map.vertexSet().iterator();
+
+        while(iterator.hasNext()){
+            // create Vertex with name and weight
+        }
+    }
+
 
     public static boolean isLocation(String userLoc){
         String[] locations = {"Security Gate", "Admissions Building", "Senior Lot", "Teach. Lot", "US Classes",
