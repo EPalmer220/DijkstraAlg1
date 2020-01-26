@@ -5,19 +5,27 @@ import org.jgrapht.Graphs;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
+import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 
 public class Main {
 
     public static void main(String[] args) {
         SimpleWeightedGraph<String, DefaultWeightedEdge> saMap = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
+
         addSAVertices(saMap);
         addSAEdges(saMap);
-        virtualTour(saMap);
+
+        // DO NOT DELETE THIS METHOD
+        convertToVertexes(saMap);
+
+        dijkstraAlg("Alumni", "Rock", saMap);
+
+        System.out.println("\n" + DijkstraShortestPath.findPathBetween(saMap, "Alumni", "Rock"));
+
+
+
     }
 
     public static void addSAVertices(SimpleWeightedGraph<String, DefaultWeightedEdge> saMap){
@@ -284,21 +292,98 @@ public class Main {
         }
     }
 
-    public static void dijkstraAlg(String source, String sink){
-        ArrayList<Object> shortestPath = new ArrayList<Object>();
+    public static void dijkstraAlg(String source, String sink, SimpleWeightedGraph map){
+        ArrayList<String> unvisited = Vertex.arrayListOfVertexes();
+        ArrayList<String> visited = new ArrayList<String>();
+        String currentVertex = source;
 
+        // initializing the source vertex
+        Vertex sourceVertex = Vertex.getVertex(source);
+        sourceVertex.setWeightFromStart(0);
+        sourceVertex.setPrevious(null);
 
+        while(unvisited.size() > 0){
+            ArrayList<String> unvisitedNeighbors = new ArrayList<String>();
+            System.out.println("\nThe current vertex being searched is: " + currentVertex);
+
+            // creates list of unvisited neighbors
+            for(Object e : Graphs.neighborListOf(map, currentVertex)){
+                String neighbor = e.toString();
+                for(String f : unvisited)
+                    if(f.equals(neighbor))
+                        unvisitedNeighbors.add(neighbor);
+            }
+
+            for(String e : unvisitedNeighbors)
+                System.out.println(e);
+
+            for(String e : unvisitedNeighbors){
+
+                double weightOfPrevious = Vertex.getVertex(currentVertex).getWeightFromStart();
+
+                System.out.println("weight of previous nodes connected to " + e + " is: " + weightOfPrevious);
+
+                DefaultWeightedEdge edge = (DefaultWeightedEdge) map.getEdge(currentVertex, e);
+                double edgeWeight = map.getEdgeWeight(edge);
+
+                double weightFromStart = edgeWeight + weightOfPrevious;
+
+                if(weightFromStart < Vertex.getVertex(e).getWeightFromStart()){
+                    Vertex.getVertex(e).setWeightFromStart(weightFromStart);
+                    Vertex.getVertex(e).setPrevious(Vertex.getVertex(currentVertex));
+                }
+            }
+
+            visited.add(currentVertex);
+            unvisited.remove(currentVertex);
+            if(unvisited.size() > 0) {
+                unvisited = priorityQueue(unvisited);
+                currentVertex = unvisited.get(0);
+            }
+        }
+
+        currentVertex = sink;
+        Stack<String> shortestPath = new Stack<String>();
+
+        while(Vertex.getVertex(currentVertex).getPrevious() != null){
+            shortestPath.add(currentVertex);
+            currentVertex = Vertex.getVertex(currentVertex).getPrevious().getName();
+        }
+
+        System.out.print("\nThe shortest path from " + source + " to " + sink + " is: ");
+
+        while(shortestPath.size() > 0)
+            if(shortestPath.size() != 1)
+                System.out.print(shortestPath.pop() + " to ");
+            else
+                System.out.print(shortestPath.pop());
+    }
+
+    public static ArrayList<String> priorityQueue(ArrayList<String> unvisited){
+        String currentShortestVertex = unvisited.get(0);
+        Double currentShortestWeight = Vertex.getVertex(unvisited.get(0)).getWeightFromStart();
+
+        for(String e : unvisited){
+            if(Vertex.getVertex(e).getWeightFromStart() < currentShortestWeight) {
+                currentShortestVertex = e;
+                currentShortestWeight = Vertex.getVertex(e).getWeightFromStart();
+            }
+        }
+        System.out.println("current shortest vertex is: " + currentShortestVertex);
+        unvisited.remove(currentShortestVertex);
+        unvisited.add(0, currentShortestVertex);
+        return unvisited;
     }
 
     public static void convertToVertexes(SimpleWeightedGraph map){
-        int count = 1;
         Iterator iterator = map.vertexSet().iterator();
+        System.out.println(map.vertexSet());
 
         while(iterator.hasNext()){
-            // create Vertex with name and weight
+            String name = iterator.next().toString();
+            Vertex vertex = new Vertex(name);
         }
     }
-
 
     public static boolean isLocation(String userLoc){
         String[] locations = {"Security Gate", "Admissions Building", "Senior Lot", "Teach. Lot", "US Classes",
