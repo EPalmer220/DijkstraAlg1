@@ -20,9 +20,11 @@ public class Main {
         // DO NOT DELETE THIS METHOD
         convertToVertexes(saMap);
 
-        dijkstraAlg("Alumni", "Rock", saMap);
+        // This is my own Dijkstra's Algorithm
+        dijkstraAlg("Chapel", "Security Gate", saMap);
 
-        System.out.println("\n" + DijkstraShortestPath.findPathBetween(saMap, "Alumni", "Rock"));
+        // This is the built-in Dijkstra's Algorithm, used for testing purposes
+        System.out.println("\n" + DijkstraShortestPath.findPathBetween(saMap, "Chapel", "Security Gate"));
 
 
 
@@ -292,6 +294,12 @@ public class Main {
         }
     }
 
+    /**
+     * Calculates the shortest path between two vertexes using Dijkstra's algorithm
+     * @param source the starting vertex
+     * @param sink the destination vertex
+     * @param map the map that is being searched
+     */
     public static void dijkstraAlg(String source, String sink, SimpleWeightedGraph map){
         ArrayList<String> unvisited = Vertex.arrayListOfVertexes();
         ArrayList<String> visited = new ArrayList<String>();
@@ -304,7 +312,7 @@ public class Main {
 
         while(unvisited.size() > 0){
             ArrayList<String> unvisitedNeighbors = new ArrayList<String>();
-            System.out.println("\nThe current vertex being searched is: " + currentVertex);
+            System.out.println("\nThe current location whose paths are being evaluated is: " + currentVertex);
 
             // creates list of unvisited neighbors
             for(Object e : Graphs.neighborListOf(map, currentVertex)){
@@ -314,26 +322,24 @@ public class Main {
                         unvisitedNeighbors.add(neighbor);
             }
 
-            for(String e : unvisitedNeighbors)
-                System.out.println(e);
-
+            // Calculates weightFromStart for each neighbor
             for(String e : unvisitedNeighbors){
 
                 double weightOfPrevious = Vertex.getVertex(currentVertex).getWeightFromStart();
-
-                System.out.println("weight of previous nodes connected to " + e + " is: " + weightOfPrevious);
 
                 DefaultWeightedEdge edge = (DefaultWeightedEdge) map.getEdge(currentVertex, e);
                 double edgeWeight = map.getEdgeWeight(edge);
 
                 double weightFromStart = edgeWeight + weightOfPrevious;
 
+                // if neighbor's weightFromStart < shortestWeightFromStart, then weightFromStart = shortestWeighFromStart
                 if(weightFromStart < Vertex.getVertex(e).getWeightFromStart()){
                     Vertex.getVertex(e).setWeightFromStart(weightFromStart);
                     Vertex.getVertex(e).setPrevious(Vertex.getVertex(currentVertex));
                 }
             }
 
+            // moves the vertex being evaluated to "visited" ArrayList
             visited.add(currentVertex);
             unvisited.remove(currentVertex);
             if(unvisited.size() > 0) {
@@ -345,13 +351,15 @@ public class Main {
         currentVertex = sink;
         Stack<String> shortestPath = new Stack<String>();
 
+        // Creates Stack of previous vertexes, starting with the one connected to the sink (destination) vertex
         while(Vertex.getVertex(currentVertex).getPrevious() != null){
             shortestPath.add(currentVertex);
             currentVertex = Vertex.getVertex(currentVertex).getPrevious().getName();
         }
 
-        System.out.print("\nThe shortest path from " + source + " to " + sink + " is: ");
+        System.out.print("\nThe shortest path from " + source + " to " + sink + " is: " + source + " to ");
 
+        // Pops stack to print the shortest path
         while(shortestPath.size() > 0)
             if(shortestPath.size() != 1)
                 System.out.print(shortestPath.pop() + " to ");
@@ -359,17 +367,24 @@ public class Main {
                 System.out.print(shortestPath.pop());
     }
 
+    /**
+     * Finds the vertex with the lowest shortestWeightFromStart and puts it at the front of the ArrayList
+     * @param unvisited the ArrayList of unvisited neighbors that's being reordered
+     * @return the reordered ArrayList
+     */
     public static ArrayList<String> priorityQueue(ArrayList<String> unvisited){
         String currentShortestVertex = unvisited.get(0);
         Double currentShortestWeight = Vertex.getVertex(unvisited.get(0)).getWeightFromStart();
 
+        // iterates through unvisited to find the Vertex with the lowest shortestWeightFromStart
         for(String e : unvisited){
             if(Vertex.getVertex(e).getWeightFromStart() < currentShortestWeight) {
                 currentShortestVertex = e;
                 currentShortestWeight = Vertex.getVertex(e).getWeightFromStart();
             }
         }
-        System.out.println("current shortest vertex is: " + currentShortestVertex);
+
+        // puts the lowest-weight vertex at the front of the list
         unvisited.remove(currentShortestVertex);
         unvisited.add(0, currentShortestVertex);
         return unvisited;
