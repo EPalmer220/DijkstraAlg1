@@ -6,12 +6,14 @@ public class Vertex {
 
     private String name;
     private double shortestWeightFromStart;
+    private double shortestTotalWeight;
     private Vertex previous;
     public static HashMap<String, Vertex> listOfVertexes = new HashMap<>();
 
     public Vertex(String name){
         this.name = name;
         this.shortestWeightFromStart = Double.POSITIVE_INFINITY;
+        this.shortestTotalWeight = Double.POSITIVE_INFINITY;
         listOfVertexes.put(name, this);
     }
 
@@ -19,6 +21,7 @@ public class Vertex {
     public Vertex(String name, double weight, Vertex previous){
         this.name = name;
         this.shortestWeightFromStart = Double.POSITIVE_INFINITY;
+        this.shortestTotalWeight = Double.POSITIVE_INFINITY;
         this.previous = previous;
         listOfVertexes.put(name, this);
     }
@@ -75,5 +78,13 @@ public class Vertex {
 
     public void setPrevious(Vertex previous) {
         this.previous = previous;
+    }
+
+    public double getShortestTotalWeight() {
+        return shortestTotalWeight;
+    }
+
+    public void setShortestTotalWeight(double shortestTotalWeight) {
+        this.shortestTotalWeight = shortestTotalWeight;
     }
 }

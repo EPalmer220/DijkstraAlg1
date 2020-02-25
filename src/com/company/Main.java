@@ -1,13 +1,15 @@
 package com.company;
 
-import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
-import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.alg.shortestpath.ALTAdmissibleHeuristic;
+import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
-import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Scanner;
+import java.util.Stack;
 
 public class Main {
 
@@ -15,16 +17,17 @@ public class Main {
         SimpleWeightedGraph<String, DefaultWeightedEdge> saMap = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
 
         addSAVertices(saMap);
-        addSAEdges(saMap);
+        addRandomSAEdges(saMap);
 
         // DO NOT DELETE THIS METHOD
         convertToVertexes(saMap);
 
         // This is my own Dijkstra's Algorithm
-        dijkstraAlg("Chapel", "Security Gate", saMap);
+        aStarAlg("Rock", "Chapel", saMap);
 
         // This is the built-in Dijkstra's Algorithm, used for testing purposes
-        System.out.println("\n" + DijkstraShortestPath.findPathBetween(saMap, "Chapel", "Security Gate"));
+        System.out.println("\n" + DijkstraShortestPath.findPathBetween(saMap, "Rock", "Chapel"));
+        numHops("Rock", "Chapel", saMap);
 
 
 
@@ -300,19 +303,22 @@ public class Main {
      * @param sink the destination vertex
      * @param map the map that is being searched
      */
-    public static void dijkstraAlg(String source, String sink, SimpleWeightedGraph map){
+    public static int dijkstraAlg(String source, String sink, SimpleWeightedGraph map){
         ArrayList<String> unvisited = Vertex.arrayListOfVertexes();
         ArrayList<String> visited = new ArrayList<String>();
         String currentVertex = source;
+        int nodeCounter = 0;
 
         // initializing the source vertex
         Vertex sourceVertex = Vertex.getVertex(source);
         sourceVertex.setWeightFromStart(0);
         sourceVertex.setPrevious(null);
+        nodeCounter++;
 
         while(unvisited.size() > 0){
+            nodeCounter++;
             ArrayList<String> unvisitedNeighbors = new ArrayList<String>();
-            System.out.println("\nThe current location whose paths are being evaluated is: " + currentVertex);
+            //System.out.println("\nThe current location whose paths are being evaluated is: " + currentVertex);
 
             // creates list of unvisited neighbors
             for(Object e : Graphs.neighborListOf(map, currentVertex)){
@@ -357,7 +363,7 @@ public class Main {
             currentVertex = Vertex.getVertex(currentVertex).getPrevious().getName();
         }
 
-        System.out.print("\nThe shortest path from " + source + " to " + sink + " is: " + source + " to ");
+        System.out.print("\nUsing Dijkstra, the shortest path from " + source + " to " + sink + " is: " + source + " to ");
 
         // Pops stack to print the shortest path
         while(shortestPath.size() > 0)
@@ -365,6 +371,8 @@ public class Main {
                 System.out.print(shortestPath.pop() + " to ");
             else
                 System.out.print(shortestPath.pop());
+
+        return nodeCounter;
     }
 
     /**
@@ -390,6 +398,107 @@ public class Main {
         return unvisited;
     }
 
+    public static int aStarAlg(String source, String sink, SimpleWeightedGraph map){
+        int nodeCounter = 0;
+        ArrayList<String> unvisited = Vertex.arrayListOfVertexes();
+        ArrayList<String> visited = new ArrayList<String>();
+        String currentVertex = source;
+        ALTAdmissibleHeuristic heuristicMap = new ALTAdmissibleHeuristic(map, map.vertexSet());
+
+        // initializing the source vertex
+        Vertex sourceVertex = Vertex.getVertex(source);
+        sourceVertex.setWeightFromStart(0);
+        sourceVertex.setShortestTotalWeight(heuristicMap.getCostEstimate(source, sink));
+        //System.out.println(sourceVertex.getShortestTotalWeight());
+        sourceVertex.setPrevious(null);
+        nodeCounter++;
+
+        while(!currentVertex.equals(sink)){
+            nodeCounter++;
+            ArrayList<String> unvisitedNeighbors = new ArrayList<String>();
+            //System.out.println("\nThe current location whose paths are being evaluated is: " + currentVertex);
+
+            // creates list of unvisited neighbors
+            for(Object e : Graphs.neighborListOf(map, currentVertex)){
+                String neighbor = e.toString();
+                for(String f : unvisited)
+                    if(f.equals(neighbor))
+                        unvisitedNeighbors.add(neighbor);
+            }
+
+            // Calculates totalWeight for each neighbor
+            for(String e : unvisitedNeighbors){
+
+                double weightOfPrevious = Vertex.getVertex(currentVertex).getWeightFromStart();
+
+                DefaultWeightedEdge edge = (DefaultWeightedEdge) map.getEdge(currentVertex, e);
+                double edgeWeight = map.getEdgeWeight(edge);
+
+                double weightFromStart = edgeWeight + weightOfPrevious;
+
+                //System.out.println("Heuristic being calculated is: " + heuristicMap.getCostEstimate(currentVertex, sink));
+
+                double totalWeight = weightFromStart + heuristicMap.getCostEstimate(currentVertex, sink);
+
+                // also have to update shortest weight from start
+                // if neighbor's totalWeight < shortestTotalWeight, then weightFromStart = shortestWeighFromStart
+                if(weightFromStart < Vertex.getVertex(e).getWeightFromStart())
+                    Vertex.getVertex(e).setWeightFromStart(weightFromStart);
+
+                if(totalWeight < Vertex.getVertex(e).getShortestTotalWeight()){
+                    Vertex.getVertex(e).setShortestTotalWeight(totalWeight);
+                    Vertex.getVertex(e).setPrevious(Vertex.getVertex(currentVertex));
+                }
+            }
+
+            // moves the vertex being evaluated to "visited" ArrayList
+            visited.add(currentVertex);
+            unvisited.remove(currentVertex);
+            if(unvisited.size() > 0) {
+                unvisited = priorityQueueAStar(unvisited);
+                currentVertex = unvisited.get(0);
+            }
+        }
+
+        currentVertex = sink;
+        Stack<String> shortestPath = new Stack<String>();
+
+        // Creates Stack of previous vertexes, starting with the one connected to the sink (destination) vertex
+        while(Vertex.getVertex(currentVertex).getPrevious() != null){
+            shortestPath.add(currentVertex);
+            currentVertex = Vertex.getVertex(currentVertex).getPrevious().getName();
+        }
+
+        System.out.print("\nUsing A*, the shortest path from " + source + " to " + sink + " is: " + source + " to ");
+
+        // Pops stack to print the shortest path
+        while(shortestPath.size() > 0)
+            if(shortestPath.size() != 1)
+                System.out.print(shortestPath.pop() + " to ");
+            else
+                System.out.print(shortestPath.pop());
+
+        return nodeCounter;
+    }
+
+    public static ArrayList<String> priorityQueueAStar(ArrayList<String> unvisited){
+        String currentShortestVertex = unvisited.get(0);
+        Double currentShortestWeight = Vertex.getVertex(unvisited.get(0)).getShortestTotalWeight();
+
+        // iterates through unvisited to find the Vertex with the lowest shortestWeightFromStart
+        for(String e : unvisited){
+            if(Vertex.getVertex(e).getShortestTotalWeight() < currentShortestWeight) {
+                currentShortestVertex = e;
+                currentShortestWeight = Vertex.getVertex(e).getShortestTotalWeight();
+            }
+        }
+
+        // puts the lowest-weight vertex at the front of the list
+        unvisited.remove(currentShortestVertex);
+        unvisited.add(0, currentShortestVertex);
+        return unvisited;
+    }
+
     public static void convertToVertexes(SimpleWeightedGraph map){
         Iterator iterator = map.vertexSet().iterator();
         System.out.println(map.vertexSet());
@@ -399,6 +508,26 @@ public class Main {
             Vertex vertex = new Vertex(name);
         }
     }
+
+    public static void numHops(String source, String sink, SimpleWeightedGraph map){
+        int numHopsDijkstra = dijkstraAlg(source, sink, map);
+
+        clear(map);
+
+        int numHopsAStar = aStarAlg(source, sink, map);
+        System.out.println("\n\nUsing Dijkstra, it took " + numHopsDijkstra + " hops. " +
+                "Using A*, it took " + numHopsAStar + " hops.");
+    }
+
+    public static void clear(SimpleWeightedGraph map){
+        for(Object v : map.vertexSet()){
+            Vertex.getVertex((String) v).setShortestTotalWeight(Double.POSITIVE_INFINITY);
+            Vertex.getVertex((String) v).setWeightFromStart(Double.POSITIVE_INFINITY);
+            Vertex.getVertex((String) v).setPrevious(null);
+        }
+    }
+
+
 
     public static boolean isLocation(String userLoc){
         String[] locations = {"Security Gate", "Admissions Building", "Senior Lot", "Teach. Lot", "US Classes",
